@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime, timezone, date, timedelta
 from uuid import UUID
-from lib.enums.app_enums import InviteStatus
+from app.lib.enums.app_enums import InviteStatus
 
 class Invite(BaseModel):
     id: UUID

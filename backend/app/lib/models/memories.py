@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from uuid import UUID
-from lib.enums.app_enums import ContentType, Mood
+from app.lib.enums.app_enums import ContentType, Mood
 
 class MemorieContent(BaseModel):
     id: UUID
@@ -16,4 +16,3 @@ class Memories(BaseModel):
     mood: Mood
     description: str
     score: int = Field(ge=1, le=10)
-
