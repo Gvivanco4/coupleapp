@@ -1,27 +1,66 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile, Form
 from pydantic import BaseModel
-from app.lib.models.memories import Memories
+from fastapi.middleware.cors import CORSMiddleware
+import cloudinary
+import cloudinary.uploader
+import uuid
+import os
 from uuid import UUID
+
 
 app = FastAPI()
 
-memories = []
+origins = [
+    "http://localhost:5500",
+]
 
-@app.post("/memories/potd")
-async def upload_potd(memorie: Memories):
-    memories.append(memorie)
-    print(memories)
-    return
 
-@app.get("/memories/potd/{memorie_id}")
-async def get_potd(memorie_id: UUID):
-    potd = next(potd for potd in memories if memorie_id == potd.id)
-    return potd
+cloudinary.config(
+    cloud_name = "dinsq9enp",
+    api_key = "476395443636281",
+    api_secret = "mdSDXnMPjUFnWpbluJ7XgRxZ8ko"
+)
 
-@app.get("/memories/potds/{couple_id}")
-async def get_potds(couple_id: UUID):
-    potds = [potd for potd in memories if couple_id == potd.couple_id]
-    print(potds)
-    return potds
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins, 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+#Model
+
+class Memorie(BaseModel):
+    id: UUID
+    titulo: str 
+    descripcion: str
+    mood: str | int
+    url: str | None = None
+    image_url: str | None = None
+
+#Endpoints
+
+@app.post("/memorie")
+async def post_memorie(
+    titulo: str = Form(...),
+    descripcion: str = Form(...),
+    mood: int = Form(...),
+    url: str | None = Form(None),
+    image: UploadFile | None = File(None),
+):
+    memorie_id = uuid.uuid4()
+    image_url = None
+
+    if image.filename:
+        cloudinary_result = cloudinary.uploader.upload(
+            image.file,
+            public_id = f"memorie_{memorie_id}"
+        )
+        image_url = cloudinary_result["secure_url"]
     
+    memorie = Memorie(id=memorie_id, titulo=titulo, descripcion=descripcion, mood=mood, url=url, image_url=image_url)
+
+    return {
+        "memorie": memorie.model_dump()
+    }
