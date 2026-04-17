@@ -1,6 +1,7 @@
 
 const container = document.querySelector('.create');
 const postButton = document.querySelector('.add');
+const body = document.querySelector('body')
 
 const createForm = () => {
     const formEle = document.createElement('form');
@@ -71,6 +72,17 @@ const createForm = () => {
         e.preventDefault();
         const formData = handleSubmit(e);
         console.log(...formData.entries());
+        
+        const urlValue = formData.get('url')
+        const imageValue = formData.get('image').name
+        console.log(`URL: ${urlValue} IMAGE:${imageValue.name}`)
+
+        if (urlValue === '' && imageValue === '') {
+           const newDiv = document.createElement('div')
+           newDiv.textContent = 'Invalido'
+           body.append(newDiv)
+        }
+
         await postData(formData);
         
         // Eliminar datos del form para volverlo a llenar de nuevo
@@ -185,7 +197,6 @@ postButton.addEventListener("click", (e) => {
 //Handle Submit
 
 const handleSubmit = (e) => {
-    console.log(e.target)
     return new FormData(e.target);
 }
 
