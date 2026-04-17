@@ -73,6 +73,11 @@ const createForm = () => {
         console.log(...formData.entries());
         await postData(formData);
         
+        // Eliminar datos del form para volverlo a llenar de nuevo
+
+        // Añadir elemento para notificar que se posteo correctamente
+
+
     }, { once: true }
 )
     //Validations
@@ -202,16 +207,8 @@ const postData = async (formData) => {
 
 }
 
-// -- Create Data Validation
+// Post Visualization
 
-//Memorie should have a title
 
-//Memorie should have a Description
-
-//Optional URL
-
-//Optional Image
-
-//Memorie should have a mood
 
 
