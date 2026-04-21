@@ -1,0 +1,21 @@
+.cards {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid red;
+    justify-content: center;
+}
+
+.card {
+    border: 1px solid black;
+}
+
+.title-card {
+    font-weight: 600;
+}
+
+.image-card {
+    width: 100%;
+    height: 100%;
+}

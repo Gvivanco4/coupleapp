@@ -220,6 +220,76 @@ const postData = async (formData) => {
 
 // Post Visualization
 
+// Memorie List
+
+const getData = async () => {
+    try {
+        const response = await fetch("http://127.0.0.1:8000/memories")
+
+        const result = await response.json();
+        console.log(result)
+        return result
+    } catch (err) {
+        console.log(err)
+    }
+
+    
+}
+// Card Component
+
+function cardComponent (memorie, parentDiv) {
+    const parentCardContainer = document.createElement('div')
+    const container = document.createElement('div')
+    const titleDiv = document.createElement('h1')
+    const descriptionDiv = document.createElement('p')
+    const graphicContentDiv = document.createElement('div')
+    const imageEle = document.createElement('img')
+    const urlDiv = document.createElement('div')
+
+    // Class names for styling
+
+    container.className = "card"
+    titleDiv.className = "title-card"
+    descriptionDiv.className = "description-card"
+    imageEle.className = "image-card"
+    urlDiv.className = "url-card"
+    parentDiv.className = "cards"
+    graphicContentDiv.className = "graphic-card"
+
+    // Do stuff
+
+    titleDiv.textContent = memorie.titulo
+    descriptionDiv.textContent = memorie.descripcion
+
+    memorie.image_url ?  imageEle.src = memorie.image_url : ""
+    memorie.url ? urlDiv.textContent = memorie.url : ""
+
+
+    // Append
+    graphicContentDiv.append(imageEle, urlDiv)
+    container.append(titleDiv, descriptionDiv, graphicContentDiv)
+    parentDiv.append(container)
+}
+
+    // Render Lists
+
+    const renderList = async () => {
+        
+        const listContainer = document.createElement('div')
+        const memorieList = await getData()
+
+        memorieList.map((m) => {
+            cardComponent(m, listContainer)
+        })
+
+        body.append(listContainer)
+    }
+
+    renderList()
+
+    // Delete from list
+
+
 
 
 

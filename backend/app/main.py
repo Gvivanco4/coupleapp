@@ -53,6 +53,14 @@ def check_title_in_db(titulo:str):
     if titulo not in [t['titulo'] for t in memories]:
         raise ValueError('No hay ningun post con este titulo')
     return titulo
+
+def check_memorie_id_in_db(id:UUID):
+
+    if id is None:
+        return id
+    if id not in [m["id"] for m in memories]:
+        raise ValueError('No existe el memorie con ese ID')
+    return id
     
 #Endpoints
 
@@ -77,7 +85,7 @@ async def post_memorie(
     memorie = Memorie(id=memorie_id, titulo=titulo, descripcion=descripcion, mood=mood, url=url, image_url=image_url)
 
     memories.append(memorie.model_dump())
-    print(memories)
+    print(f"OUTPUT FASTAPI POST{memories}")
 
     return {
         "memorie": memorie.model_dump()
@@ -99,4 +107,14 @@ async def get_posts(
     if titulo and not mood:
         titulo_filter = [m for m in memories if titulo == m['titulo']]
         return titulo_filter
+    print(f"OUTPUT FASTAPI GET{memories}")
     return memories
+
+# DELETE POST
+
+@app.delete("memorie/{memorie_id}")
+async def delete_memorie(memorie_id: Annotated[UUID, AfterValidator(check_memorie_id_in_db)]):
+   memorie_to_delete = [m for m in memories if m["id"] == memorie_id]
+   memories = [m for m in memories if m["id"] != memorie_id]
+   return memorie_to_delete
+   
