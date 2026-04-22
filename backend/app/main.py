@@ -112,9 +112,40 @@ async def get_posts(
 
 # DELETE POST
 
-@app.delete("memorie/{memorie_id}")
+@app.delete("/memorie/{memorie_id}")
 async def delete_memorie(memorie_id: Annotated[UUID, AfterValidator(check_memorie_id_in_db)]):
+   global memories
    memorie_to_delete = [m for m in memories if m["id"] == memorie_id]
    memories = [m for m in memories if m["id"] != memorie_id]
    return memorie_to_delete
+
+# UPDATE POST
+
+@app.put("/memorie/{memorie_id}")
+async def update_memorie(
+    memorie_id: Annotated[UUID, AfterValidator(check_memorie_id_in_db)],
+    titulo: str = Form(...),
+    descripcion: str = Form(...),
+    mood: int = Form(...),
+    url: str | None = Form(None),
+    image: UploadFile | None = File(None)
+    ):
+        global memories
+        memories = [m for m in memories if m["id"] != memorie_id]
+        image_url = None
+        if image.filename:
+            cloudinary_result = cloudinary.uploader.upload(
+                image.file,
+                public_id = f"memorie_{memorie_id}"
+            )
+            image_url = cloudinary_result["secure_url"]
+        
+        memorie = Memorie(id=memorie_id, titulo=titulo, descripcion=descripcion, mood=mood, url=url, image_url=image_url)
+
+        memories.append(memorie.model_dump())
+        print(f"OUTPUT FASTAPI POST{memories}")
+
+        return {
+            "memorie": memorie.model_dump()
+        }
    
