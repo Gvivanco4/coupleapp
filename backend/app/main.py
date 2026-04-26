@@ -40,7 +40,6 @@ class Memorie(BaseModel):
     titulo: str 
     descripcion: str
     mood: str | int
-    url: str | None = None
     image_url: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now().isoformat())
 
@@ -69,7 +68,6 @@ async def post_memorie(
     titulo: str = Form(...),
     descripcion: str = Form(...),
     mood: int = Form(...),
-    url: str | None = Form(None),
     image: UploadFile | None = File(None),
 ):
     memorie_id = uuid.uuid4()
@@ -82,7 +80,7 @@ async def post_memorie(
         )
         image_url = cloudinary_result["secure_url"]
     
-    memorie = Memorie(id=memorie_id, titulo=titulo, descripcion=descripcion, mood=mood, url=url, image_url=image_url)
+    memorie = Memorie(id=memorie_id, titulo=titulo, descripcion=descripcion, mood=mood, image_url=image_url)
 
     memories.append(memorie.model_dump())
     print(f"OUTPUT FASTAPI POST{memories}")
@@ -127,7 +125,6 @@ async def update_memorie(
     titulo: str = Form(...),
     descripcion: str = Form(...),
     mood: int = Form(...),
-    url: str | None = Form(None),
     image: UploadFile | None = File(None)
     ):
         global memories
@@ -140,7 +137,7 @@ async def update_memorie(
             )
             image_url = cloudinary_result["secure_url"]
         
-        memorie = Memorie(id=memorie_id, titulo=titulo, descripcion=descripcion, mood=mood, url=url, image_url=image_url)
+        memorie = Memorie(id=memorie_id, titulo=titulo, descripcion=descripcion, mood=mood, image_url=image_url)
 
         memories.append(memorie.model_dump())
         print(f"OUTPUT FASTAPI POST{memories}")

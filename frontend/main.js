@@ -6,10 +6,10 @@ const body = document.querySelector('body')
 const createForm = (formID, memorieID = null) => {
     const formEle = document.createElement('form');
     const submitButton = document.createElement('button');
+    const textInputBox = document.createElement('div')
 
-    
     formEle.id = formID
-    inputNames = ['titulo', 'descripcion', 'url'];
+    const inputNames = ['titulo', 'descripcion'];
     
     inputNames.map((t) => {
         const containerInput = document.createElement('div')
@@ -18,24 +18,25 @@ const createForm = (formID, memorieID = null) => {
         const textArea = document.createElement('textarea')
 
         if (t === 'descripcion') {
-            label.htmlFor = `${t}`;
+            label.htmlFor = `${formID}-${t}`;
             label.textContent = `${t.charAt(0).toUpperCase() + t.slice(1)}`;
             label.style.display = "none";
             textArea.type = 'text';
-            textArea.id = `${t}`;
+            textArea.id = `${formID}-${t}`;
             textArea.name = `${t}`;
             containerInput.id = `${t}-id`;
             containerInput.append(label, textArea)
         } else {
-            label.htmlFor = `${t}`;
+            label.htmlFor = `${formID}-${t}`;
             label.textContent = `${t.charAt(0).toUpperCase() + t.slice(1)}`;
             label.style.display = "none";
             input.type = 'text';
-            input.id = `${t}`;
+            input.id = `${formID}-${t}`;
             input.name = `${t}`;
             containerInput.id = `${t}-id`;
             containerInput.append(label, input)
         }
+        
         formEle.append(containerInput);
         }
     )
@@ -43,22 +44,38 @@ const createForm = (formID, memorieID = null) => {
    
     const moodContainerInput = document.createElement('div')
     const imageContainerInput = document.createElement('div')
+    // const urlContainerInput = document.createElement('div')
     const moodLabel = document.createElement('label');
     const moodInput = document.createElement('input');
     const imageLabel = document.createElement('label');
     const imageInput = document.createElement('input');
+    const imageStatus = document.createElement('p');
+    // const urlLabel = document.createElement('label');
+    // const urlInput = document.createElement('input');
+
+    const imageIcon = document.createElement('span')
 
     imageLabel.htmlFor = 'image';
-    imageLabel.textContent = 'Image';
     imageContainerInput.id = 'image-id'
+    imageIcon.className = 'material-symbols-outlined'
+    imageIcon.textContent = 'image'
+
+    imageLabel.append(imageIcon)
 
     imageInput.type = 'file'
     imageInput.id = 'image';
     imageInput.name = 'image'
     imageInput.accept = 'image/jpeg, image/png, image/jpg'
+    imageStatus.className = 'file-status'
+    imageStatus.textContent = 'No hay archivo seleccionado'
+
+    const moodIcon = document.createElement('span')
+
+    moodIcon.className = 'material-symbols-outlined'
+    moodIcon.textContent = 'mood'
 
     moodLabel.htmlFor = 'mood';
-    moodLabel.textContent = 'Mood';
+    moodLabel.append(moodIcon)
 
     moodContainerInput.id = 'mood-id'
     moodInput.type = 'range';
@@ -74,35 +91,95 @@ const createForm = (formID, memorieID = null) => {
     submitButton.className = 'submit'
     submitButton.textContent = 'Submit';
 
-    moodContainerInput.append(moodLabel, moodInput)
-    imageContainerInput.append(imageLabel, imageInput)
-    formEle.append(moodContainerInput, imageContainerInput, submitButton);
+    // urlLabel.htmlFor = `input`;
+    // urlLabel.textContent = `Input`;
+    // urlLabel.style.display = "none";
+    // urlInput.type = 'url';
+    // urlInput.id = `input`;
+    // urlInput.name = `Input`;
+    // urlContainerInput.id = `url-id`;
+    // urlContainerInput.append(urlLabel, urlInput)
+    const moodPlaceholder = document.createElement('p')
+    moodPlaceholder.textContent = 'Mood de la memoria'
+
+    const contentGraphBox = document.createElement('div')
+    contentGraphBox.id = 'content-box'
+
+    moodContainerInput.append(moodLabel, moodInput, moodPlaceholder)
+    imageContainerInput.append(imageLabel, imageInput, imageStatus)
+    contentGraphBox.append(imageContainerInput, moodContainerInput)
+    
+    formEle.append(contentGraphBox, submitButton);
     
     container.append(formEle);
 
-    const titleInput = document.querySelector('[name="titulo"]')
-    const descriptionInput = document.querySelector('[name="descripcion"]')
-    const urlInput = document.querySelector('[name="url"]')
-    urlInput.type = 'url'
+    const titleInput = formEle.querySelector('[name="titulo"]')
+    const descriptionInput = formEle.querySelector('[name="descripcion"]')
     titleInput.required = true
-    titleInput.minLength = '4'
-    titleInput.maxLength = '20'
+    titleInput.minLength = 4
+    titleInput.maxLength = 20
     titleInput.placeholder = 'Ingresa el título de la memoria'
     descriptionInput.required = true
-    descriptionInput.placeholder = 'Escribe la descripción de la memoria'
+    descriptionInput.placeholder = 'Escribe la descripción de la memoria o ingresa un URL de Youtube'
+
+    if (formID === 'edit') {
+        console.log(memorieID)
+        titleInput.value = memorieID.titulo
+        descriptionInput.value = memorieID.descripcion
+        moodInput.value = memorieID.mood 
+    }
+
+    const emptyColor = "#DDDDDD";
+
+    moodInput.addEventListener('input', (e) => {
+        const input = e.target
+        const value = Number(input.value);
+        
+        const percent = ((value - input.min) / (input.max - input.min)) * 100 + "%";
+        let fillColor;
+
+        if (value < 5) {
+            fillColor = "#D32F2F"; // rojo
+            moodIcon.textContent = 'mood_bad'
+        } else if (value > 6) {
+            fillColor = "#2E7D32"; // verde
+            moodIcon.textContent = 'mood'
+        } else {
+            fillColor = "#1976D2"; // azul neutro
+            moodIcon.textContent = 'sentiment_content'
+        }
+
+        input.style.background = `linear-gradient(
+            to right,
+            ${fillColor} 0%,
+            ${fillColor} ${percent},
+            ${emptyColor} ${percent},
+            ${emptyColor} 100%
+            )`;
+        
+    })
+
+    imageInput.addEventListener('change', (e) => {
+        const selectedFile = e.target.files[0]
+        imageStatus.textContent = selectedFile ? selectedFile.name : 'No file chosen'
+        imageStatus.style = selectedFile ? 'color: green;' : null
+        
+    })
 
     formEle.addEventListener('submit', async (e) => {
+        if (!formEle.reportValidity()) {
+            return;
+        }
+
         const cardsEle = document.querySelector('.cards')
         if (formEle.id === 'post') {
         e.preventDefault();
         const formData = handleSubmit(e);
         console.log(...formData.entries());
-        
-        const urlValue = formData.get('url')
+    
         const imageValue = formData.get('image').name
-        console.log(`URL: ${urlValue} IMAGE:${imageValue.name}`)
 
-        if (urlValue === '' && imageValue === '') {
+        if (imageValue === '') {
            const newDiv = document.createElement('div')
            newDiv.textContent = 'Invalido'
            body.append(newDiv)
@@ -113,19 +190,11 @@ const createForm = (formID, memorieID = null) => {
         e.preventDefault();
         const formData = handleSubmit(e);
         console.log(...formData.entries());
-        
-        const urlValue = formData.get('url')
-        const imageValue = formData.get('image').name
-        console.log(`URL: ${urlValue} IMAGE:${imageValue.name}`)
 
-        if (urlValue === '' && imageValue === '') {
-           const newDiv = document.createElement('div')
-           newDiv.textContent = 'Invalido'
-           body.append(newDiv)
-        }
-
-        await updateMemorie(formData, memorieID);
+        await updateMemorie(formData, memorieID.id);
     }
+
+    
     
     cardsEle.innerHTML = ""
     renderList()
@@ -166,16 +235,16 @@ const createForm = (formID, memorieID = null) => {
         
 
 
-        //URL
+        // //URL
 
-        urlInput.addEventListener('input', (e) => {
-            if (urlInput.validity.typeMismatch) {
-                urlInput.setCustomValidity("Ingresa una URL valida Nanei")
+        // urlInput.addEventListener('input', (e) => {
+        //     if (urlInput.validity.typeMismatch) {
+        //         urlInput.setCustomValidity("Ingresa una URL valida Nanei")
             
-            } else {
-                urlInput.setCustomValidity('')
-            }
-        })
+        //     } else {
+        //         urlInput.setCustomValidity('')
+        //     }
+        // })
 
         //Descripción
 
@@ -187,7 +256,7 @@ const createForm = (formID, memorieID = null) => {
             } else if (descriptionInput.validity.valueMissing) {
                 descriptionInput.setCustomValidity('La descripción no puede estar vacía')
             } else {
-                descriptionInputInput.setCustomValidity(`La descripción debe contener min. ${descriptionInput.minLength} y máx. ${descriptionInput.maxLength} caracteres`)
+                descriptionInput.setCustomValidity(`La descripción debe contener min. ${descriptionInput.minLength} y máx. ${descriptionInput.maxLength} caracteres`)
             }
         })
 
@@ -219,16 +288,39 @@ const createForm = (formID, memorieID = null) => {
         //File
 
         imageInput.addEventListener('change', (e) => {
-            const validImage = e.target.files[0].name.endsWith('.jpg') || e.target.files[0].name.endsWith('.png')
+            const selectedFile = e.target.files[0]
+
+            if (!selectedFile) {
+                imageInput.setCustomValidity('')
+                return
+            }
+
+            const validImage = selectedFile.name.endsWith('.jpg') || selectedFile.name.endsWith('.png') || selectedFile.name.endsWith('.jpeg')
     
              if (!validImage) {
                 imageInput.setCustomValidity("Seleccioniste archivo incorrecto")
                 imageInput.reportValidity()
+                imageInput.style = 'color: red;'
              } else {
-                console.log("OK")
+                imageInput.setCustomValidity('')
+                imageInput.style = 'color: green;'
              }
              
         })
+
+        //Descripction Youtube Video
+
+        descriptionInput.addEventListener('input', (e) => {
+            const youtubePattern = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+            const value = e.target.value
+            const isYoutubeUrl = youtubePattern.test(value)
+            const youtubeUrl = value.match(youtubePattern)
+
+            isYoutubeUrl ? youtubeVideo(youtubeUrl, contentGraphBox) : null
+
+        })
+
+        return formEle
 }
 
 
@@ -240,7 +332,7 @@ const createForm = (formID, memorieID = null) => {
 //     createForm(formIdentification)
 // }, { once: true})
 
-createForm('post')
+const postFo = createForm('post')
 
 //Handle
 
@@ -315,21 +407,26 @@ const getData = async () => {
 function cardComponent (memorie, parentDiv) {
     const parentCardContainer = document.createElement('div')
     const container = document.createElement('div')
+    const cardsContainer = document.querySelector('.cards')
     const titleDiv = document.createElement('h1')
     const descriptionDiv = document.createElement('p')
     const graphicContentDiv = document.createElement('div')
     const imageEle = document.createElement('img')
-    const urlDiv = document.createElement('div')
+    // const urlDiv = document.createElement('div')
     const deleteButton = document.createElement('button')
     const editButton = document.createElement('button')
 
+
+    if (cardsContainer) {
+        cardsContainer.remove()
+    }
     // Class names for styling
 
     container.className = "card"
     titleDiv.className = "title-card"
     descriptionDiv.className = "description-card"
     imageEle.className = "image-card"
-    urlDiv.className = "url-card"
+    // urlDiv.className = "url-card"
     parentDiv.className = "cards"
     graphicContentDiv.className = "graphic-card"
     deleteButton.className = "dlt-btn"
@@ -340,12 +437,12 @@ function cardComponent (memorie, parentDiv) {
     titleDiv.textContent = memorie.titulo
     descriptionDiv.textContent = memorie.descripcion
 
-    memorie.image_url ?  imageEle.src = memorie.image_url : ""
-    memorie.url ? urlDiv.textContent = memorie.url : ""
+    // memorie.image_url ?  imageEle.src = memorie.image_url : ""
+    // memorie.url ? urlDiv.textContent = memorie.url : ""
 
 
     // Append
-    graphicContentDiv.append(imageEle, urlDiv)
+    graphicContentDiv.append(imageEle)
     container.append(titleDiv, descriptionDiv, graphicContentDiv, editButton, deleteButton)
     parentDiv.append(container)
 
@@ -357,15 +454,30 @@ function cardComponent (memorie, parentDiv) {
 
     editButton.addEventListener('click', (e) => {
         const editForm = 'edit'
-        createForm(editForm, memorie.id)
+        console.log(postFo)
+        postFo.style.display = 'none'
+        const editFo = createForm(editForm, memorie)
+        console.log(editFo)
+
+        editFo.addEventListener('submit', (e) => {
+        editFo.remove()
+        postFo.style.display = 'flex'
     })
+    }, {once: true})
+
+    
+
+
+    
 }
 
     // Render Lists
 
     const renderList = async () => {
-        
+
+      
         const listContainer = document.createElement('div')
+        
         const memorieList = await getData()
 
         memorieList.map((m) => {
@@ -379,6 +491,20 @@ function cardComponent (memorie, parentDiv) {
 
     // Add NOTIFICATIONS WHEN SUBMITTED, DELETED, EDITED, UPDATED.
     // ERRORS POP UPS
+
+    // Youtube Embed
+
+    const youtubeVideo = (urlVideo, descriptionInput) => {
+        const iFrame = document.createElement('iframe')
+        const idBox = document.createElement('div')
+        idBox.id = 'youtube-video'
+        iFrame.className = 'youtube'
+        const id = urlVideo.slice(-11)[1]
+        console.log(id)
+        iFrame.setAttribute('src', `https://www.youtube.com/embed/${id}`)
+        idBox.append(iFrame)
+        descriptionInput.append(idBox)
+    }
 
 
 
