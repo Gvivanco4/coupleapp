@@ -14,7 +14,7 @@ from sqlmodel import Field, Session, SQLModel, create_engine, select
 from contextlib import asynccontextmanager
 
 origins = [
-    "http://localhost:5500",
+    "https://naneigonza.netlify.app",
 ]
 
 def load_env_file() -> None:
