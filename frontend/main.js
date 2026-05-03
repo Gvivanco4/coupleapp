@@ -418,7 +418,7 @@ const handleDelete = async (id) => {
 
 const postData = async (formData) => {
   try {
-    const response = await fetch("http://127.0.0.1:8000/memorie", {
+    const response = await fetch("https://coupleapp-luv0.onrender.com/memorie", {
       method: "POST",
       body: formData
     });
@@ -441,7 +441,7 @@ const postData = async (formData) => {
 
 const deleteMemorie = async (id) => {
     try {
-        const response = await fetch(`http://127.0.0.1:8000/memorie/${id}`, {
+        const response = await fetch(`https://coupleapp-luv0.onrender.com/memorie/${id}`, {
             method: 'DELETE'
         })
         const result = await response.json();
@@ -454,7 +454,7 @@ const deleteMemorie = async (id) => {
 
 const updateMemorie = async (formData, id) => {
     try {
-        const response = await fetch(`http://127.0.0.1:8000/memorie/${id}`, {
+        const response = await fetch(`https://coupleapp-luv0.onrender.com/memorie/${id}`, {
             method: 'PUT',
             body: formData
         })
@@ -469,7 +469,7 @@ const updateMemorie = async (formData, id) => {
 
 const getData = async () => {
     try {
-        const response = await fetch("http://127.0.0.1:8000/memories")
+        const response = await fetch("https://coupleapp-luv0.onrender.com/memories")
 
         const result = await response.json();
         console.log(result)
