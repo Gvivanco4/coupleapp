@@ -101,7 +101,7 @@ const createForm = (formID, memorieID = null) => {
 
     submitButton.type = 'submit';
     submitButton.className = 'submit'
-    submitButton.textContent = 'Submit';
+    submitButton.textContent = 'Subir';
 
     // urlLabel.htmlFor = `input`;
     // urlLabel.textContent = `Input`;
@@ -227,6 +227,7 @@ const createForm = (formID, memorieID = null) => {
                 })
 
                 formEle.reset()
+                resetVisualState()
             } else if (formEle.id === 'edit') {
                 const formData = handleSubmit(e);
                 console.log(...formData.entries());
@@ -257,6 +258,7 @@ const createForm = (formID, memorieID = null) => {
                 })
 
                 formEle.reset()
+                resetVisualState()
             }
 
             if (cardsEle) {
@@ -268,6 +270,15 @@ const createForm = (formID, memorieID = null) => {
             isSubmitting = false
             submitButton.disabled = false
         }
+
+        const resetVisualState = () => {
+            imageStatus.textContent = 'No hay archivo seleccionado';
+            imageStatus.style = '';
+
+            moodInput.value = '5';
+            moodIcon.textContent = 'sentiment_content';
+            moodInput.style.background = '';
+};
 
 
     })
