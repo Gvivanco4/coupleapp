@@ -17,30 +17,6 @@ origins = [
     "http://localhost:5500",
 ]
 
-#SQL LITE
-
-sqlite_file_name = 'couple_app.db'
-sqlite_url = f"sqlite:////data/{sqlite_file_name}"
-
-connect_args = {"check_same_thread": False}
-engine = create_engine(sqlite_url, connect_args=connect_args)
-
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
-
-def get_session():
-    with Session(engine) as session:
-        yield session
-
-SessionDep = Annotated[Session, Depends(get_session)]
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    create_db_and_tables()
-    yield
-
-app = FastAPI(lifespan=lifespan)
-
 def load_env_file() -> None:
     env_path = FilePath(__file__).resolve().parents[1] / ".env"
     if not env_path.exists():
@@ -59,9 +35,35 @@ def load_env_file() -> None:
         os.environ.setdefault(key, value)
 
 
-def get_cloudinary_config() -> tuple[str, str, str]:
-    load_env_file()
+load_env_file()
 
+# Database
+
+sqlite_file_name = "couple_app.db"
+sqlite_url = f"sqlite:////data/{sqlite_file_name}"
+database_url = os.getenv("DATABASE_URL")
+
+connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
+engine = create_engine(database_url, echo=True, connect_args=connect_args)
+
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+SessionDep = Annotated[Session, Depends(get_session)]
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
+
+def get_cloudinary_config() -> tuple[str, str, str]:
     cloud_name = (
         os.getenv("CLOUDINARY_CLOUD_NAME")
         or os.getenv("CLOUDINARY_NAME")
@@ -116,6 +118,7 @@ class Memorie(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
 
 class SQLMemorie(SQLModel, table=True):
+    __tablename__ = 'memories'
     id: UUID = Field(primary_key=True)
     titulo: str = Field(index=True)
     descripcion: str
