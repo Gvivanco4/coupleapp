@@ -2,6 +2,18 @@
 const container = document.querySelector('.create');
 // const postButton = document.querySelector('.add');
 const body = document.querySelector('body')
+const modal = document.createElement('dialog')
+    modal.id = 'modal'
+    const textModal = document.createElement('p')
+    textModal.id = 'textModal'
+    const iconModal = document.createElement('span')
+    iconModal.className = 'material-symbols-outlined'
+    const closeBtn = document.createElement('button')
+    closeBtn.id = 'closeModal'
+    closeBtn.textContent = 'OK'
+
+    modal.append(iconModal, textModal, closeBtn)
+    body.append(modal)
 
 const createForm = (formID, memorieID = null) => {
     const formEle = document.createElement('form');
@@ -112,6 +124,7 @@ const createForm = (formID, memorieID = null) => {
     formEle.append(contentGraphBox, submitButton);
     
     container.append(formEle);
+    let isSubmitting = false
 
     const titleInput = formEle.querySelector('[name="titulo"]')
     const descriptionInput = formEle.querySelector('[name="descripcion"]')
@@ -126,7 +139,7 @@ const createForm = (formID, memorieID = null) => {
         console.log(memorieID)
         titleInput.value = memorieID.titulo
         descriptionInput.value = memorieID.descripcion
-        moodInput.value = memorieID.mood 
+        moodInput.value = memorieID.mood
     }
 
     const emptyColor = "#DDDDDD";
@@ -167,45 +180,97 @@ const createForm = (formID, memorieID = null) => {
     })
 
     formEle.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (isSubmitting) {
+            return;
+        }
+
         if (!formEle.reportValidity()) {
             return;
         }
 
-        const cardsEle = document.querySelector('.cards')
-        if (formEle.id === 'post') {
-        e.preventDefault();
-        const formData = handleSubmit(e);
-        console.log(...formData.entries());
-    
-        const imageValue = formData.get('image').name
+        isSubmitting = true
+        submitButton.disabled = true
 
-        if (imageValue === '') {
-           const newDiv = document.createElement('div')
-           newDiv.textContent = 'Invalido'
-           body.append(newDiv)
+        const cardsEle = document.querySelector('.cards')
+        
+        try {
+            if (formEle.id === 'post') {
+                const formData = handleSubmit(e);
+                console.log(...formData.entries());
+                modal.showModal()
+
+                iconModal.textContent = 'cycle'
+                iconModal.className = 'material-symbols-outlined loading'
+                textModal.textContent = 'Subiendo memoria, espera un momento Nanei'
+                closeBtn.hidden = true
+
+                try {
+                    await postData(formData);
+                    
+                        iconModal.textContent = 'check'
+                        iconModal.className = 'material-symbols-outlined success'
+                        textModal.textContent = 'Memoria subida con éxito'
+                        closeBtn.hidden = false
+                  
+                } catch (e) {
+                    iconModal.textContent = 'error'
+                    iconModal.className = 'material-symbols-outlined error'
+                    textModal.textContent = 'Error Nanei, intentalo de nuevo'
+                    closeBtn.hidden = false
+                }
+
+                closeBtn.addEventListener('click', () => {
+                    modal.close()
+                    console.log('creado 1')
+                })
+
+                formEle.reset()
+            } else if (formEle.id === 'edit') {
+                const formData = handleSubmit(e);
+                console.log(...formData.entries());
+                modal.showModal()
+
+                iconModal.textContent = 'cycle'
+                iconModal.className = 'material-symbols-outlined loading'
+                textModal.textContent = 'Actualizando memoria, espera un momento Nanei'
+                closeBtn.hidden = true
+
+                try {
+                    await updateMemorie(formData, memorieID.id);
+                    
+                        iconModal.textContent = 'check'
+                        iconModal.className = 'material-symbols-outlined success'
+                        textModal.textContent = 'Memoria actualizada con éxito'
+                        closeBtn.hidden = false
+                    
+                } catch (err) {
+                    iconModal.textContent = 'error'
+                    iconModal.className = 'material-symbols-outlined error'
+                    textModal.textContent = 'Error Nanei, intentalo de nuevo'
+                    closeBtn.hidden = false
+                }
+
+                closeBtn.addEventListener('click', () => {
+                    modal.close()
+                })
+
+                formEle.reset()
+            }
+
+            if (cardsEle) {
+                cardsEle.innerHTML = ""
+            }
+            
+            renderList()
+        } finally {
+            isSubmitting = false
+            submitButton.disabled = false
         }
 
-        await postData(formData);
-    } else if (formEle.id === 'edit') {
-        e.preventDefault();
-        const formData = handleSubmit(e);
-        console.log(...formData.entries());
 
-        await updateMemorie(formData, memorieID.id);
-    }
-
-    
-    
-    cardsEle.innerHTML = ""
-    renderList()
-        
-        // Eliminar datos del form para volverlo a llenar de nuevo
-
-        // Añadir elemento para notificar que se posteo correctamente
-
-
-    }, { once: true }
-)
+    })
     //Validations
 
         //Title
@@ -315,8 +380,12 @@ const createForm = (formID, memorieID = null) => {
             const value = e.target.value
             const isYoutubeUrl = youtubePattern.test(value)
             const youtubeUrl = value.match(youtubePattern)
+            imageContainerInput.style.display = 'flex'
 
-            isYoutubeUrl ? youtubeVideo(youtubeUrl, contentGraphBox) : null
+            if (isYoutubeUrl) {
+                youtubeVideo(youtubeUrl, contentGraphBox)
+                imageContainerInput.style.display = 'none'
+            } 
 
         })
 
@@ -348,17 +417,24 @@ const handleDelete = async (id) => {
 // Post Metod
 
 const postData = async (formData) => {
-     try {
+  try {
     const response = await fetch("http://127.0.0.1:8000/memorie", {
       method: "POST",
       body: formData
     });
 
+    if (!response.ok) {
+      throw new Error(`POST /memorie failed with status ${response.status}`);
+    }
+
     const result = await response.json();
+    
     console.log(result);
+    return result;
 
   } catch (err) {
     console.error(err);
+    throw err;
   }
 
 }
@@ -384,8 +460,10 @@ const updateMemorie = async (formData, id) => {
         })
         const result = await response.json();
         console.log(result)
+        return result
     } catch (err) {
         console.log(err)
+        throw err
     }
 }
 
@@ -415,41 +493,129 @@ function cardComponent (memorie, parentDiv) {
     // const urlDiv = document.createElement('div')
     const deleteButton = document.createElement('button')
     const editButton = document.createElement('button')
-
+    const mainContainer = document.querySelector('.main-container')
+    const buttonDiv = document.createElement('div')
+    const moodEle = document.createElement('div')
+    const moodIcon = document.createElement('span')
+    const moodText = document.createElement('p')
+    const textDiv = document.createElement('div')
 
     if (cardsContainer) {
         cardsContainer.remove()
     }
+
     // Class names for styling
+        moodIcon.className = 'material-symbols-outlined'
+        moodIcon.textContent = 'mood'
+        container.className = "card"
+        titleDiv.className = "title-card"
+        descriptionDiv.className = "description-card"
+        buttonDiv.className = 'buttons'
+        imageEle.className = "image-card"
+        // urlDiv.className = "url-card"
+        parentDiv.className = "cards"
+        graphicContentDiv.className = "graphic-card"
+        deleteButton.className = "dlt-btn"
+        editButton.className = "edit-btn"
+        moodEle.className = 'mood-card'
+        textDiv.className = 'text-card'
 
-    container.className = "card"
-    titleDiv.className = "title-card"
-    descriptionDiv.className = "description-card"
-    imageEle.className = "image-card"
-    // urlDiv.className = "url-card"
-    parentDiv.className = "cards"
-    graphicContentDiv.className = "graphic-card"
-    deleteButton.className = "dlt-btn"
-    editButton.className = "edit-btn"
-
-    // Do stuff
-
+        editButton.textContent = 'Editar'
+    deleteButton.textContent = 'Eliminar'
     titleDiv.textContent = memorie.titulo
     descriptionDiv.textContent = memorie.descripcion
 
-    // memorie.image_url ?  imageEle.src = memorie.image_url : ""
-    // memorie.url ? urlDiv.textContent = memorie.url : ""
+    memorie.image_url ?  imageEle.src = memorie.image_url : ""
 
+
+    moodText.textContent = 'Me siento..'
+    if (memorie.mood > 7) {
+        moodIcon.textContent = 'mood'
+    } else if (memorie.mood < 5) {
+        moodIcon.textContent = 'mood_bad'
+    } else {
+        moodIcon.textContent = 'sentiment_content'
+    }
+
+    const youtubePattern = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+    const value = memorie.descripcion
+    const isYoutubeUrl = youtubePattern.test(value)
+    const youtubeUrl = value.match(youtubePattern)
+
+    if (!memorie.image_url || isYoutubeUrl) {
+
+           // Append
+        textDiv.append(titleDiv, descriptionDiv)
+        moodEle.append(moodText, moodIcon)
+        buttonDiv.append(editButton, deleteButton)
+
+        if (isYoutubeUrl) {
+            youtubeVideo(youtubeUrl, graphicContentDiv, 'card')
+            graphicContentDiv.append(moodEle)
+        } else {
+            graphicContentDiv.append(moodEle)
+        } 
+
+        container.append(textDiv, graphicContentDiv, buttonDiv)
+        parentDiv.append(container)
+    } else {
+        
 
     // Append
-    graphicContentDiv.append(imageEle)
-    container.append(titleDiv, descriptionDiv, graphicContentDiv, editButton, deleteButton)
-    parentDiv.append(container)
+        textDiv.append(titleDiv, descriptionDiv)
+        moodEle.append(moodText, moodIcon)
+        buttonDiv.append(editButton, deleteButton)
+        graphicContentDiv.append(imageEle, moodEle)
+        container.append(textDiv, graphicContentDiv, buttonDiv)
+        parentDiv.append(container)
+    }
+    
 
+
+    // Do stuff
+    
     //Event Listeners Buttons
 
     deleteButton.addEventListener('click', async (e) => {
-        const dlt = await handleDelete(memorie.id)
+        e.preventDefault()
+        const cardsEle = document.querySelector('.cards')
+
+        
+
+        modal.showModal()
+
+        iconModal.textContent = 'cycle'
+        iconModal.className = 'material-symbols-outlined loading'
+        textModal.textContent = 'Eliminando memoria, espera un momento Nanei'
+        closeBtn.hidden = true
+
+        try {
+            
+            await handleDelete(memorie.id)
+            
+                 iconModal.textContent = 'check'
+                iconModal.className = 'material-symbols-outlined success'
+                textModal.textContent = 'Memoria eliminada con éxito'
+                closeBtn.hidden = false
+           
+        } catch (e) {
+                iconModal.textContent = 'error'
+                iconModal.className = 'material-symbols-outlined error'
+                textModal.textContent = 'Error Nanei, intentalo de nuevo'
+                closeBtn.hidden = false
+        }
+
+        closeBtn.addEventListener('click', () => {
+            modal.close()
+        })
+
+        if (cardsEle) {
+            cardsEle.innerHTML = ''
+        }
+
+        renderList()
+
+        
     })
 
     editButton.addEventListener('click', (e) => {
@@ -460,6 +626,7 @@ function cardComponent (memorie, parentDiv) {
         console.log(editFo)
 
         editFo.addEventListener('submit', (e) => {
+        editFo.reset()
         editFo.remove()
         postFo.style.display = 'flex'
     })
@@ -475,7 +642,7 @@ function cardComponent (memorie, parentDiv) {
 
     const renderList = async () => {
 
-      
+         const mainContainer = document.querySelector('.main-container')
         const listContainer = document.createElement('div')
         
         const memorieList = await getData()
@@ -484,7 +651,7 @@ function cardComponent (memorie, parentDiv) {
             cardComponent(m, listContainer)
         })
 
-        body.append(listContainer)
+        mainContainer.append(listContainer)
     }
 
     renderList()
@@ -494,19 +661,25 @@ function cardComponent (memorie, parentDiv) {
 
     // Youtube Embed
 
-    const youtubeVideo = (urlVideo, descriptionInput) => {
+    const youtubeVideo = (urlVideo, descriptionInput, type='form') => {
         const iFrame = document.createElement('iframe')
         const idBox = document.createElement('div')
-        idBox.id = 'youtube-video'
-        iFrame.className = 'youtube'
-        const id = urlVideo.slice(-11)[1]
-        console.log(id)
-        iFrame.setAttribute('src', `https://www.youtube.com/embed/${id}`)
-        idBox.append(iFrame)
-        descriptionInput.append(idBox)
+
+        if (type === 'form') {
+            idBox.id = 'youtube-video'
+            iFrame.className = 'youtube'
+            const id = urlVideo.slice(-11)[1]
+            iFrame.setAttribute('src', `https://www.youtube.com/embed/${id}`)
+            idBox.append(iFrame)
+            descriptionInput.append(idBox)
+        } else {
+            iFrame.className = 'youtube-card'
+            const id = urlVideo.slice(-11)[1]
+            iFrame.setAttribute('src', `https://www.youtube.com/embed/${id}`)
+            descriptionInput.append(iFrame)
+        }
+        
     }
-
-
 
 
 
